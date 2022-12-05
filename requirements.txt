@@ -17,3 +17,4 @@ volumentations-aucmedi==1.0.1
 plotnine==0.10.0
 pathos==0.3.0
 matplotlib==3.5.1
+itk==5.3.0

@@ -23,6 +23,7 @@
 import os
 import numpy as np
 from PIL import Image
+import itk
 
 #-----------------------------------------------------#
 #             Image Loader for AUCMEDI IO             #
@@ -72,11 +73,30 @@ def image_loader(sample, path_imagedir, image_format=None, grayscale=False,
     if image_format : img_file = sample + "." + image_format
     else : img_file = sample
     path_img = os.path.join(path_imagedir, img_file)
-    # Load image via the PIL package
-    img_raw = Image.open(path_img)
-    # Convert image to grayscale or rgb
-    if grayscale : img_converted = img_raw.convert('LA')
-    else : img_converted = img_raw.convert('RGB')
+    # Get format
+    base, ext = os.path.splitext(path_img)
+    # Load image
+    if ext in [".nii", ".gz", ".mha"]:
+        # Load image via the itk package
+        itk_img = itk.imread(path_img, itk.UC)
+        # Convert image to NumPy
+        itk_raw = np.asarray(itk_img, itk.UC)
+        # Convert to PIL image + grayscale or rgb
+        if grayscale:
+            img_converted = Image.fromarray(itk_raw, "LA")
+        else:
+            img_converted = Image.fromarray(itk_raw, "RGB")
+    elif ext in [".jpeg", ".jpg", ".tif", ".tiff", ".png", ".bmp", ".gif", ".npy"]:
+        # Load image via the PIL package
+        img_raw = Image.open(path_img)
+        # Convert image to grayscale or rgb
+        if grayscale:
+            img_converted = img_raw.convert('LA')
+        else:
+            img_converted = img_raw.convert('RGB')
+    else:
+        # No supported datatype
+        raise ValueError("Datatype are not supported: "+ext)
     # Convert image to NumPy
     img = np.asarray(img_converted)
     # Perform additional preprocessing if grayscale image
